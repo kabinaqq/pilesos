@@ -63,26 +63,37 @@
             user-select: none;
         }
 
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
         body {
             font-family: 'Arial', sans-serif;
             background: var(--bg-primary);
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
-            padding: 15px;
-            overflow: hidden;
+            margin: 0;
+            height: 100vh;
+            width: 100vw;
+            position: fixed;
+            top: 0;
+            left: 0;
         }
 
         .game-container {
             background: var(--bg-primary);
-            border-radius: 20px;
-            box-shadow: 0 10px 30px var(--shadow-color);
             overflow: hidden;
-            max-width: 500px;
             width: 100%;
-            padding: 20px;
-            border: 1px solid var(--border-color);
+            height: 100%;
+            max-width: 450px;
+            max-height: 900px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            margin: 0 auto;
         }
 
         .game-header {
@@ -90,28 +101,34 @@
             justify-content: space-between;
             background: var(--stats-bg);
             color: white;
-            padding: 12px 20px;
-            border-radius: 10px;
-            margin-bottom: 15px;
+            padding: 10px 15px;
+            border-radius: 0;
+            margin-bottom: 8px;
             font-weight: bold;
-            box-shadow: 0 4px 6px var(--shadow-color);
+            font-size: 0.85em;
+            flex-shrink: 0;
+            height: 50px;
+            align-items: center;
         }
 
         .level-indicator {
             background: #ff9800;
             padding: 3px 10px;
-            border-radius: 15px;
-            font-size: 0.9em;
+            border-radius: 12px;
+            font-size: 0.8em;
+            white-space: nowrap;
         }
 
         .progress-container {
-            margin-bottom: 15px;
+            margin-bottom: 8px;
+            flex-shrink: 0;
+            padding: 0 15px;
         }
 
         .progress-bar {
-            height: 10px;
+            height: 6px;
             background: var(--bg-secondary);
-            border-radius: 5px;
+            border-radius: 3px;
             overflow: hidden;
         }
 
@@ -122,31 +139,83 @@
             transition: width 0.3s ease;
         }
 
-        #gameCanvas {
-            background-color: var(--floor-color);
-            border: 2px solid var(--border-color);
+        .canvas-wrapper {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .canvas-container {
+            position: relative;
+            overflow: hidden;
+            background: var(--floor-color);
             border-radius: 10px;
+            border: 1px solid var(--border-color);
+            /* Квадратное игровое поле */
+            width: calc(100vw - 30px);
+            max-width: 400px;
+            height: calc(100vw - 30px);
+            max-height: 400px;
+            margin: 0 auto;
+        }
+
+        #gameCanvas {
             width: 100%;
+            height: 100%;
             display: block;
-            box-shadow: inset 0 0 10px var(--shadow-color);
-            margin: 20px 0;
+        }
+
+        .game-bottom-section {
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 15px 15px 20px 15px;
+            margin-top: auto;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            font-size: 0.8em;
+            color: var(--text-secondary);
+            background: var(--bg-secondary);
+            padding: 10px;
+            border-radius: 8px;
+            margin: 0;
+        }
+
+        .stat-item {
+            text-align: center;
+            flex: 1;
+        }
+
+        .stat-value {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: var(--text-primary);
+            display: block;
         }
 
         .controls-container {
-            margin: 20px 0;
             text-align: center;
+            padding: 5px 0;
         }
 
         .controls-row {
             display: flex;
             justify-content: center;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
         .control-btn {
-            width: 80px;
-            height: 80px;
-            font-size: 32px;
+            width: 70px;
+            height: 70px;
+            font-size: 28px;
             margin: 0 10px;
             background: var(--bg-controls);
             color: white;
@@ -154,7 +223,7 @@
             border-radius: 50%;
             cursor: pointer;
             user-select: none;
-            box-shadow: 0 6px 0 var(--button-shadow), 0 8px 15px var(--shadow-color);
+            box-shadow: 0 4px 0 var(--button-shadow), 0 6px 10px var(--shadow-color);
             transition: all 0.1s;
             display: flex;
             align-items: center;
@@ -164,9 +233,24 @@
         }
 
         .control-btn.active {
-            transform: translateY(4px);
-            box-shadow: 0 2px 0 var(--button-shadow), 0 4px 8px var(--shadow-color);
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 var(--button-shadow), 0 2px 5px var(--shadow-color);
             background: var(--bg-controls-active);
+        }
+
+        .brand {
+            text-align: center;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .brand a {
+            color: var(--text-secondary);
+            font-size: 0.75em;
+            text-decoration: underline;
+            text-decoration-color: var(--text-secondary);
+            text-decoration-thickness: 1px;
         }
 
         .game-overlay {
@@ -183,96 +267,186 @@
             color: white;
             text-align: center;
             padding: 20px;
-            border-radius: 20px;
+            z-index: 1000;
         }
 
         .overlay-content {
             background: rgba(255,255,255,0.1);
-            padding: 30px;
-            border-radius: 15px;
+            padding: 20px;
+            border-radius: 12px;
             backdrop-filter: blur(10px);
-            max-width: 90%;
+            width: 90%;
+            max-width: 320px;
             border: 1px solid rgba(255,255,255,0.2);
         }
 
         .overlay-content h2 {
-            font-size: 2.5em;
-            margin-bottom: 20px;
+            font-size: 1.8em;
+            margin-bottom: 12px;
             text-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
 
         .overlay-content p {
-            font-size: 1.2em;
-            margin-bottom: 25px;
-            line-height: 1.5;
+            font-size: 0.9em;
+            margin-bottom: 16px;
+            line-height: 1.4;
         }
 
         .action-btn {
             background: linear-gradient(145deg, #FF5722, #E64A19);
             color: white;
             border: none;
-            padding: 15px 40px;
-            font-size: 1.2em;
+            padding: 12px 24px;
+            font-size: 0.9em;
             border-radius: 50px;
             cursor: pointer;
-            margin: 10px;
+            margin: 6px;
             font-weight: bold;
-            box-shadow: 0 6px 0 #BF360C, 0 8px 20px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 0 #BF360C, 0 6px 15px rgba(0,0,0,0.3);
             transition: all 0.2s;
+            min-width: 200px;
+            width: 100%;
         }
 
         .action-btn.next {
             background: linear-gradient(145deg, #2196F3, #1976D2);
-            box-shadow: 0 6px 0 #0D47A1, 0 8px 20px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 0 #0D47A1, 0 6px 15px rgba(0,0,0,0.3);
         }
 
-        .stats {
-            display: flex;
-            justify-content: space-around;
-            margin-top: 10px;
-            font-size: 0.9em;
-            color: var(--text-secondary);
+        .action-btn.restart {
+            background: linear-gradient(145deg, #9C27B0, #7B1FA2);
+            box-shadow: 0 4px 0 #4A148C, 0 6px 15px rgba(0,0,0,0.3);
         }
 
-        .stat-item {
-            text-align: center;
+        /* Адаптация для разных экранов */
+        @media (max-height: 700px) {
+            .game-header {
+                height: 45px;
+                padding: 8px 12px;
+                font-size: 0.8em;
+            }
+            
+            .control-btn {
+                width: 65px;
+                height: 65px;
+                font-size: 26px;
+                margin: 0 8px;
+            }
+            
+            .game-bottom-section {
+                padding: 10px 15px 15px 15px;
+                gap: 8px;
+            }
+            
+            .canvas-container {
+                width: calc(100vw - 30px);
+                height: calc(100vw - 30px);
+            }
         }
 
-        .stat-value {
-            font-size: 1.5em;
-            font-weight: bold;
-            color: var(--text-primary);
-            display: block;
+        @media (max-height: 600px) {
+            .game-header {
+                height: 40px;
+                padding: 6px 10px;
+                font-size: 0.75em;
+            }
+            
+            .control-btn {
+                width: 60px;
+                height: 60px;
+                font-size: 24px;
+                margin: 0 6px;
+            }
+            
+            .stats {
+                padding: 8px;
+                font-size: 0.75em;
+            }
+            
+            .stat-value {
+                font-size: 1.2em;
+            }
         }
 
-        .brand {
-            text-align: center;
-            margin-top: 20px;
-            padding-top: 10px;
-            border-top: 1px solid var(--border-color);
+        @media (min-height: 800px) {
+            .canvas-container {
+                width: 380px;
+                height: 380px;
+            }
+            
+            .control-btn {
+                width: 75px;
+                height: 75px;
+                font-size: 30px;
+                margin: 0 12px;
+            }
         }
 
-        .brand a {
-            color: var(--text-secondary);
-            font-size: 0.8em;
-            text-decoration: underline;
-            text-decoration-color: var(--text-secondary);
-            text-decoration-thickness: 1px;
+        @media (min-width: 500px) {
+            .canvas-container {
+                width: 400px;
+                height: 400px;
+            }
+        }
+
+        /* Для ландшафтной ориентации */
+        @media (orientation: landscape) and (max-height: 500px) {
+            .game-container {
+                flex-direction: row;
+                padding: 10px;
+            }
+            
+            .game-header {
+                display: none;
+            }
+            
+            .progress-container {
+                display: none;
+            }
+            
+            .canvas-wrapper {
+                flex: 3;
+                order: 2;
+            }
+            
+            .canvas-container {
+                width: 50vh;
+                height: 50vh;
+                max-width: none;
+                max-height: none;
+            }
+            
+            .game-bottom-section {
+                flex: 2;
+                order: 1;
+                padding: 10px;
+                gap: 15px;
+            }
+            
+            .stats {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .control-btn {
+                width: 60px;
+                height: 60px;
+                font-size: 24px;
+                margin: 0 5px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="game-container">
-        <div style="height: 20px;"></div>
-        
         <div class="game-header">
             <div class="level-info">
-                Уровень: <span id="level">1</span>/10
+                Ур: <span id="level">1</span>/10
             </div>
             <div class="trash-info">
                 Мусор: <span id="trashCount">0</span>/<span id="trashTotal">10</span>
             </div>
-            <div class="level-indicator" id="levelName">Начальный</div>
+            <div class="level-indicator" id="levelName">Начало</div>
         </div>
         
         <div class="progress-container">
@@ -281,45 +455,51 @@
             </div>
         </div>
         
-        <canvas id="gameCanvas" width="450" height="450"></canvas>
-        
-        <div class="stats">
-            <div class="stat-item">
-                <span class="stat-value" id="time">0</span>
-                секунд
-            </div>
-            <div class="stat-item">
-                <span class="stat-value" id="score">0</span>
-                очков
-            </div>
-            <div class="stat-item">
-                <span class="stat-value" id="moves">0</span>
-                ходов
+        <div class="canvas-wrapper">
+            <div class="canvas-container">
+                <canvas id="gameCanvas"></canvas>
             </div>
         </div>
         
-        <div class="controls-container">
-            <div class="controls-row">
-                <button class="control-btn" id="btnUp">↑</button>
+        <div class="game-bottom-section">
+            <div class="stats">
+                <div class="stat-item">
+                    <span class="stat-value" id="time">0</span>
+                    сек
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="score">0</span>
+                    очков
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="moves">0</span>
+                    ходов
+                </div>
             </div>
-            <div class="controls-row">
-                <button class="control-btn" id="btnLeft">←</button>
-                <button class="control-btn" id="btnDown">↓</button>
-                <button class="control-btn" id="btnRight">→</button>
+            
+            <div class="controls-container">
+                <div class="controls-row">
+                    <button class="control-btn" id="btnUp">↑</button>
+                </div>
+                <div class="controls-row">
+                    <button class="control-btn" id="btnLeft">←</button>
+                    <button class="control-btn" id="btnDown">↓</button>
+                    <button class="control-btn" id="btnRight">→</button>
+                </div>
             </div>
-        </div>
-        
-        <div class="brand">
-            <a href="https://t.me/kabinagames" target="_blank">Kabina Inc.</a>
+            
+            <div class="brand">
+                <a href="https://t.me/kabinagames" target="_blank">Kabina Inc.</a>
+            </div>
         </div>
         
         <div class="game-overlay" id="gameOverOverlay">
             <div class="overlay-content">
-                <h2 id="overlayTitle">ИГРА ОКОНЧЕНА</h2>
-                <p id="overlayMessage">Вы проиграли!</p>
+                <h2 id="overlayTitle">СТОЛКНОВЕНИЕ!</h2>
+                <p id="overlayMessage">Вы проиграли на уровне <span id="lostLevel">1</span>!</p>
                 <div id="overlayStats"></div>
-                <button class="action-btn" id="restartBtn">🔄 Начать заново</button>
-                <button class="action-btn next" id="nextLevelBtn" style="display: none;">➡️ Следующий уровень</button>
+                <button class="action-btn" id="restartBtn">🔄 Продолжить с этого уровня</button>
+                <button class="action-btn restart" id="restartFromBeginningBtn">🔄 Начать с 1 уровня</button>
             </div>
         </div>
         
@@ -330,20 +510,27 @@
                 <button class="action-btn" id="startBtn">🎮 Начать игру</button>
             </div>
         </div>
+        
+        <div class="game-overlay" id="winOverlay" style="display: none;">
+            <div class="overlay-content">
+                <h2>ПОБЕДА!</h2>
+                <p>Вы прошли все 10 уровней!</p>
+                <div id="winStats"></div>
+                <button class="action-btn" id="restartWinBtn">🔄 Играть заново</button>
+            </div>
+        </div>
     </div>
 
     <script>
         // Конфигурация игры
         const CONFIG = {
             LEVELS: 10,
-            ROBOT_SPEED: 3,
-            ROBOT_SPEED_HOLD: 2,
-            ROBOT_RADIUS: 16,
-            TRASH_RADIUS: 10,
-            LEVEL_NAMES: [
-                'Начальный', 'Легкий', 'Простой', 'Средний', 'Нормальный',
-                'Сложный', 'Очень сложный', 'Эксперт', 'Мастер', 'Невозможный'
-            ]
+            ROBOT_SPEED: 3.5,
+            ROBOT_SPEED_HOLD: 2.5,
+            ROBOT_RADIUS: 12,
+            TRASH_RADIUS: 7,
+            LEVEL_NAMES: ['Начало', 'Легкий', 'Простой', 'Средний', 'Нормальный',
+                         'Сложный', 'Очень сл.', 'Эксперт', 'Мастер', 'Невозм.']
         };
 
         // Элементы DOM
@@ -359,11 +546,15 @@
         const movesElement = document.getElementById('moves');
         const gameOverOverlay = document.getElementById('gameOverOverlay');
         const startOverlay = document.getElementById('startOverlay');
+        const winOverlay = document.getElementById('winOverlay');
         const overlayTitle = document.getElementById('overlayTitle');
         const overlayMessage = document.getElementById('overlayMessage');
+        const lostLevelElement = document.getElementById('lostLevel');
         const overlayStats = document.getElementById('overlayStats');
+        const winStats = document.getElementById('winStats');
         const restartBtn = document.getElementById('restartBtn');
-        const nextLevelBtn = document.getElementById('nextLevelBtn');
+        const restartFromBeginningBtn = document.getElementById('restartFromBeginningBtn');
+        const restartWinBtn = document.getElementById('restartWinBtn');
         const startBtn = document.getElementById('startBtn');
 
         // Состояние игры
@@ -382,7 +573,7 @@
             activeButtons: new Set(),
             lastUpdateTime: 0,
             moveCountedThisFrame: false,
-            gameLoopRunning: true // Флаг, что игровой цикл должен работать
+            gameLoopActive: false
         };
 
         // Объекты игры
@@ -394,15 +585,41 @@
         };
         let trash = [];
         let obstacles = [];
-        let roomSize = { width: 450, height: 450 };
+        let roomSize = { width: 0, height: 0 };
+        let canvasSize = { width: 0, height: 0 };
+
+        // Обновление размеров канваса
+        function updateCanvasSize() {
+            const container = canvas.parentElement;
+            const containerWidth = container.clientWidth;
+            const containerHeight = container.clientHeight;
+            
+            // Используем ширину контейнера для квадратного поля
+            const size = Math.min(containerWidth, containerHeight);
+            canvas.width = size;
+            canvas.height = size;
+            canvasSize = { width: size, height: size };
+        }
+
+        // Запуск игрового цикла
+        function startGameLoop() {
+            if (gameState.gameLoopActive) return;
+            
+            gameState.gameLoopActive = true;
+            gameState.lastUpdateTime = performance.now();
+            gameLoop();
+        }
+
+        // Остановка игрового цикла
+        function stopGameLoop() {
+            gameState.gameLoopActive = false;
+        }
 
         // Инициализация игры
         function initGame() {
-            canvas.width = 450;
-            canvas.height = 450;
+            updateCanvasSize();
             
-            // Сброс состояния
-            gameState.score = 0;
+            // Сброс состояния (но не уровня)
             gameState.time = 0;
             gameState.moves = 0;
             gameState.trashCollected = 0;
@@ -411,15 +628,13 @@
             gameState.activeKeys.clear();
             gameState.activeButtons.clear();
             gameState.moveCountedThisFrame = false;
-            gameState.gameLoopRunning = true; // Важно: включаем игровой цикл
             
             updateUI();
             createLevel(currentLevel);
-            gameState.lastUpdateTime = performance.now();
             
-            // Запускаем игровой цикл если он не запущен
+            // Запускаем игровой цикл
             if (gameState.gameStarted) {
-                requestAnimationFrame(gameLoop);
+                startGameLoop();
             }
         }
 
@@ -430,20 +645,23 @@
             obstacles = [];
             gameState.trashCollected = 0;
             
-            // Настройки уровня
-            const baseSize = 400;
-            const sizeIncrease = Math.min((level - 1) * 30, 200);
+            // Размер комнаты зависит от уровня
+            const baseSize = canvasSize.width * 0.9;
+            const sizeIncrease = Math.min((level - 1) * 0.025, 0.15);
+            const roomWidth = baseSize * (1 + sizeIncrease);
+            const roomHeight = baseSize * (1 + sizeIncrease);
+            
             roomSize = {
-                width: baseSize + sizeIncrease,
-                height: baseSize + sizeIncrease
+                width: roomWidth,
+                height: roomHeight
             };
             
             // Центрируем комнату на канвасе
-            roomSize.offsetX = (450 - roomSize.width) / 2;
-            roomSize.offsetY = (450 - roomSize.height) / 2;
+            roomSize.offsetX = (canvasSize.width - roomSize.width) / 2;
+            roomSize.offsetY = (canvasSize.height - roomSize.height) / 2;
             
             // Создаем стены
-            const wallThickness = 20;
+            const wallThickness = 12;
             obstacles.push({
                 x: roomSize.offsetX,
                 y: roomSize.offsetY,
@@ -474,21 +692,21 @@
             });
             
             // Внутренние препятствия
-            const obstacleCount = Math.min(3 + level * 2, 15);
+            const obstacleCount = Math.min(3 + level * 2, 12);
             for (let i = 0; i < obstacleCount; i++) {
                 let obstacle;
                 let attempts = 0;
                 
                 do {
-                    const width = 30 + Math.random() * 50;
-                    const height = 30 + Math.random() * 50;
+                    const width = 20 + Math.random() * 35;
+                    const height = 20 + Math.random() * 35;
                     
                     obstacle = {
                         x: roomSize.offsetX + wallThickness + Math.random() * (roomSize.width - width - 2 * wallThickness),
                         y: roomSize.offsetY + wallThickness + Math.random() * (roomSize.height - height - 2 * wallThickness),
                         width: width,
                         height: height,
-                        radius: 10,
+                        radius: 6,
                         type: 'obstacle'
                     };
                     attempts++;
@@ -506,7 +724,7 @@
             robot.angle = 0;
             
             // Создаем мусор
-            gameState.totalTrash = Math.min(5 + level * 3, 30);
+            gameState.totalTrash = Math.min(5 + level * 3, 20);
             for (let i = 0; i < gameState.totalTrash; i++) {
                 let piece;
                 let attempts = 0;
@@ -534,14 +752,14 @@
 
         // Поиск безопасной позиции для робота
         function findSafePosition() {
-            const wallThickness = 20;
+            const wallThickness = 12;
             const maxAttempts = 100;
             
             for (let attempt = 0; attempt < maxAttempts; attempt++) {
-                const x = roomSize.offsetX + robot.radius + wallThickness + 10 + 
-                         Math.random() * (roomSize.width - 2 * wallThickness - 2 * robot.radius - 20);
-                const y = roomSize.offsetY + robot.radius + wallThickness + 10 + 
-                         Math.random() * (roomSize.height - 2 * wallThickness - 2 * robot.radius - 20);
+                const x = roomSize.offsetX + robot.radius + wallThickness + 8 + 
+                         Math.random() * (roomSize.width - 2 * wallThickness - 2 * robot.radius - 16);
+                const y = roomSize.offsetY + robot.radius + wallThickness + 8 + 
+                         Math.random() * (roomSize.height - 2 * wallThickness - 2 * robot.radius - 16);
                 
                 if (isPositionSafe(x, y)) {
                     return { x, y };
@@ -549,8 +767,8 @@
             }
             
             return {
-                x: roomSize.offsetX + robot.radius + wallThickness + 10,
-                y: roomSize.offsetY + robot.radius + wallThickness + 10
+                x: roomSize.offsetX + robot.radius + wallThickness + 8,
+                y: roomSize.offsetY + robot.radius + wallThickness + 8
             };
         }
 
@@ -578,8 +796,8 @@
                 const distanceX = Math.abs((rect.x + rect.width/2) - (obstacle.x + obstacle.width/2));
                 const distanceY = Math.abs((rect.y + rect.height/2) - (obstacle.y + obstacle.height/2));
                 
-                if (distanceX < (rect.width + obstacle.width)/2 + 20 &&
-                    distanceY < (rect.height + obstacle.height)/2 + 20) {
+                if (distanceX < (rect.width + obstacle.width)/2 + 15 &&
+                    distanceY < (rect.height + obstacle.height)/2 + 15) {
                     return true;
                 }
             }
@@ -589,7 +807,7 @@
                 Math.pow(rect.y + rect.height/2 - robot.y, 2)
             );
             
-            return distance < robot.radius + Math.max(rect.width, rect.height) + 20;
+            return distance < robot.radius + Math.max(rect.width, rect.height) + 15;
         }
 
         function isTrashOverlapping(piece) {
@@ -624,7 +842,7 @@
                 Math.pow(piece.y - robot.y, 2)
             );
             
-            return distanceToRobot < robot.radius + piece.radius + 20;
+            return distanceToRobot < robot.radius + piece.radius + 12;
         }
 
         // Отрисовка
@@ -633,6 +851,11 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
             // Рисуем фон
+            ctx.fillStyle = getComputedStyle(document.documentElement)
+                .getPropertyValue('--floor-color').trim();
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Рисуем комнату
             ctx.fillStyle = getComputedStyle(document.documentElement)
                 .getPropertyValue('--floor-color').trim();
             ctx.fillRect(roomSize.offsetX, roomSize.offsetY, roomSize.width, roomSize.height);
@@ -690,7 +913,7 @@
             
             ctx.strokeStyle = getComputedStyle(document.documentElement)
                 .getPropertyValue('--robot-outline').trim();
-            ctx.lineWidth = 3;
+            ctx.lineWidth = 2;
             ctx.stroke();
             
             // Глаз робота
@@ -699,34 +922,32 @@
             ctx.beginPath();
             const eyeX = robot.x + Math.cos(robot.angle) * robot.radius * 0.6;
             const eyeY = robot.y + Math.sin(robot.angle) * robot.radius * 0.6;
-            ctx.arc(eyeX, eyeY, robot.radius * 0.3, 0, Math.PI * 2);
+            ctx.arc(eyeX, eyeY, robot.radius * 0.25, 0, Math.PI * 2);
             ctx.fill();
             
             // Два датчика спереди
             ctx.fillStyle = getComputedStyle(document.documentElement)
                 .getPropertyValue('--robot-sensor').trim();
             
-            // Левый датчик
             const sensorAngle = robot.angle + Math.PI * 0.3;
             const sensor1X = robot.x + Math.cos(sensorAngle) * robot.radius * 0.8;
             const sensor1Y = robot.y + Math.sin(sensorAngle) * robot.radius * 0.8;
             ctx.beginPath();
-            ctx.arc(sensor1X, sensor1Y, robot.radius * 0.2, 0, Math.PI * 2);
+            ctx.arc(sensor1X, sensor1Y, robot.radius * 0.15, 0, Math.PI * 2);
             ctx.fill();
             
-            // Правый датчик
             const sensorAngle2 = robot.angle - Math.PI * 0.3;
             const sensor2X = robot.x + Math.cos(sensorAngle2) * robot.radius * 0.8;
             const sensor2Y = robot.y + Math.sin(sensorAngle2) * robot.radius * 0.8;
             ctx.beginPath();
-            ctx.arc(sensor2X, sensor2Y, robot.radius * 0.2, 0, Math.PI * 2);
+            ctx.arc(sensor2X, sensor2Y, robot.radius * 0.15, 0, Math.PI * 2);
             ctx.fill();
             
             // Центральная кнопка
             ctx.fillStyle = getComputedStyle(document.documentElement)
                 .getPropertyValue('--robot-details').trim();
             ctx.beginPath();
-            ctx.arc(robot.x, robot.y, robot.radius * 0.4, 0, Math.PI * 2);
+            ctx.arc(robot.x, robot.y, robot.radius * 0.35, 0, Math.PI * 2);
             ctx.fill();
         }
 
@@ -759,19 +980,15 @@
             
             // Если есть движение
             if (dx !== 0 || dy !== 0) {
-                // Обновляем угол
                 robot.angle = Math.atan2(dy, dx);
                 
-                // Выбираем скорость
                 const currentSpeed = gameState.activeButtons.size > 0 ? CONFIG.ROBOT_SPEED_HOLD : CONFIG.ROBOT_SPEED;
-                
-                // Новая позиция
                 const speedMultiplier = deltaTime / 16.67;
                 const newX = robot.x + dx * currentSpeed * speedMultiplier;
                 const newY = robot.y + dy * currentSpeed * speedMultiplier;
                 
                 // Проверка границ комнаты
-                const wallThickness = 20;
+                const wallThickness = 12;
                 const minX = roomSize.offsetX + robot.radius + wallThickness;
                 const maxX = roomSize.offsetX + roomSize.width - robot.radius - wallThickness;
                 const minY = roomSize.offsetY + robot.radius + wallThickness;
@@ -791,7 +1008,6 @@
                     gameState.moveCountedThisFrame = true;
                 }
                 
-                // Проверка столкновений и сбора мусора
                 checkCollisions();
                 checkTrashCollection();
             } else {
@@ -850,19 +1066,22 @@
             gameState.activeButtons.clear();
             updateButtonStates();
             gameState.score += 500 * currentLevel;
-            gameState.gameLoopRunning = false; // Останавливаем игровой цикл
             
-            overlayTitle.textContent = 'УРОВЕНЬ ПРОЙДЕН!';
-            overlayMessage.textContent = `Отлично! Вы собрали весь мусор на уровне ${currentLevel}.`;
-            
-            overlayStats.innerHTML = `
-                <p>Счет: ${gameState.score}</p>
-                <p>Время: ${gameState.time} сек.</p>
-                <p>Ходов: ${gameState.moves}</p>
-            `;
-            
-            nextLevelBtn.style.display = currentLevel < CONFIG.LEVELS ? 'inline-block' : 'none';
-            gameOverOverlay.style.display = 'flex';
+            if (currentLevel < CONFIG.LEVELS) {
+                currentLevel++;
+                createLevel(currentLevel);
+                gameState.levelComplete = false; // Сбрасываем флаг
+                startGameLoop(); // Запускаем игровой цикл для нового уровня
+            } else {
+                // Игра пройдена полностью
+                stopGameLoop();
+                winOverlay.style.display = 'flex';
+                winStats.innerHTML = `
+                    <p>Финальный счет: ${gameState.score}</p>
+                    <p>Общее время: ${gameState.time} сек.</p>
+                    <p>Общие ходы: ${gameState.moves}</p>
+                `;
+            }
         }
 
         // Конец игры
@@ -871,18 +1090,19 @@
             gameState.activeKeys.clear();
             gameState.activeButtons.clear();
             updateButtonStates();
-            gameState.gameLoopRunning = false; // Останавливаем игровой цикл
+            stopGameLoop();
             
+            lostLevelElement.textContent = currentLevel;
             overlayTitle.textContent = 'СТОЛКНОВЕНИЕ!';
-            overlayMessage.textContent = 'Робот врезался в препятствие!';
+            overlayMessage.textContent = `Вы проиграли на уровне ${currentLevel}!`;
             
             overlayStats.innerHTML = `
-                <p>Уровень: ${currentLevel}</p>
-                <p>Собран мусор: ${gameState.trashCollected}/${gameState.totalTrash}</p>
-                <p>Итоговый счет: ${gameState.score}</p>
+                <p>Счет: ${gameState.score}</p>
+                <p>Время: ${gameState.time} сек.</p>
+                <p>Ходов: ${gameState.moves}</p>
+                <p>Собрано мусора: ${gameState.trashCollected}/${gameState.totalTrash}</p>
             `;
             
-            nextLevelBtn.style.display = 'none';
             gameOverOverlay.style.display = 'flex';
         }
 
@@ -913,8 +1133,10 @@
             });
         }
 
-        // Игровой цикл - УПРОЩЕННАЯ ВЕРСИЯ
+        // Игровой цикл
         function gameLoop() {
+            if (!gameState.gameLoopActive) return;
+            
             const currentTime = performance.now();
             const deltaTime = currentTime - gameState.lastUpdateTime;
             
@@ -923,9 +1145,10 @@
             
             gameState.lastUpdateTime = currentTime;
             
-            // ПРОСТОЙ ПРИНЦИП: если игра активна - продолжаем цикл
             if (gameState.gameStarted && !gameState.gameOver && !gameState.levelComplete) {
                 requestAnimationFrame(gameLoop);
+            } else {
+                gameState.gameLoopActive = false;
             }
         }
 
@@ -958,13 +1181,13 @@
                     break;
                 case 'r':
                 case 'к':
-                    restartGame();
+                    continueFromCurrentLevel();
                     break;
-                case ' ':
-                    if (gameState.levelComplete) {
-                        nextLevel();
-                    }
-                    break;
+            }
+            
+            // Запускаем игровой цикл если он не активен
+            if (!gameState.gameLoopActive && gameState.gameStarted && !gameState.gameOver && !gameState.levelComplete) {
+                startGameLoop();
             }
         }
 
@@ -1012,6 +1235,11 @@
                     if (!gameState.activeButtons.has(direction)) {
                         gameState.activeButtons.add(direction);
                         updateButtonStates();
+                        
+                        // Запускаем игровой цикл если он не активен
+                        if (!gameState.gameLoopActive && gameState.gameStarted && !gameState.gameOver && !gameState.levelComplete) {
+                            startGameLoop();
+                        }
                     }
                 };
                 
@@ -1031,33 +1259,26 @@
             });
         }
 
-        // Следующий уровень - УПРОЩЕННАЯ ВЕРСИЯ
-        function nextLevel() {
-            if (currentLevel < CONFIG.LEVELS) {
-                currentLevel++;
-                gameOverOverlay.style.display = 'none';
-                
-                // Сбрасываем состояние для нового уровня
-                gameState.gameOver = false;
-                gameState.levelComplete = false;
-                gameState.gameLoopRunning = true;
-                
-                createLevel(currentLevel);
-                gameState.lastUpdateTime = performance.now();
-                
-                // ПРОСТО ЗАПУСКАЕМ ИГРОВОЙ ЦИКЛ
-                gameLoop();
-            } else {
-                overlayTitle.textContent = 'ПОБЕДА!';
-                overlayMessage.textContent = 'Вы прошли все 10 уровней!';
-                overlayStats.innerHTML = `<p>Финальный счет: ${gameState.score}</p>`;
-            }
+        // Продолжить с текущего уровня
+        function continueFromCurrentLevel() {
+            gameState.gameOver = false;
+            gameState.levelComplete = false;
+            gameOverOverlay.style.display = 'none';
+            initGame();
         }
 
-        // Перезапуск игры
-        function restartGame() {
+        // Начать с 1 уровня
+        function restartFromBeginning() {
             currentLevel = 1;
-            gameOverOverlay.style.display = 'none';
+            gameState.score = 0;
+            continueFromCurrentLevel();
+        }
+
+        // Перезапуск после победы
+        function restartAfterWin() {
+            currentLevel = 1;
+            gameState.score = 0;
+            winOverlay.style.display = 'none';
             initGame();
         }
 
@@ -1067,7 +1288,6 @@
             gameState.gameStarted = true;
             initGame();
             
-            // Запускаем таймер
             if (gameState.timerInterval) {
                 clearInterval(gameState.timerInterval);
             }
@@ -1077,9 +1297,15 @@
                     timeElement.textContent = gameState.time;
                 }
             }, 1000);
-            
-            // Запускаем игровой цикл
-            gameLoop();
+        }
+
+        // Обработка изменения размера окна
+        function handleResize() {
+            updateCanvasSize();
+            if (gameState.gameStarted) {
+                createLevel(currentLevel);
+                draw();
+            }
         }
 
         // Инициализация
@@ -1091,12 +1317,16 @@
             
             // Кнопки интерфейса
             startBtn.addEventListener('click', startGame);
-            restartBtn.addEventListener('click', restartGame);
-            nextLevelBtn.addEventListener('click', nextLevel);
+            restartBtn.addEventListener('click', continueFromCurrentLevel);
+            restartFromBeginningBtn.addEventListener('click', restartFromBeginning);
+            restartWinBtn.addEventListener('click', restartAfterWin);
+            
+            // Обработка изменения размера
+            window.addEventListener('resize', handleResize);
+            window.addEventListener('orientationchange', handleResize);
             
             // Первоначальная отрисовка
-            canvas.width = 450;
-            canvas.height = 450;
+            updateCanvasSize();
             ctx.fillStyle = getComputedStyle(document.documentElement)
                 .getPropertyValue('--floor-color').trim();
             ctx.fillRect(0, 0, canvas.width, canvas.height);
