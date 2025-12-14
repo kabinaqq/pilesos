@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Робот Пылесос</title>
+    <style>
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --bg-controls: #4CAF50;
+            --bg-controls-active: #45a049;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --border-color: #333333;
+            --shadow-color: rgba(0,0,0,0.2);
+            --obstacle-color: #e74c3c;
+            --trash-color: #3498db;
+            --floor-color: #f8f9fa;
+            --wall-color: #2c3e50;
+            --robot-color: #ffffff;
+            --robot-outline: #2c3e50;
+            --robot-eye: #e74c3c;
+            --robot-details: #00BCD4;
+            --robot-sensor: #7f8c8d;
+            --stats-bg: linear-gradient(to right, #4CAF50, #45a049);
+            --overlay-bg: rgba(0,0,0,0.85);
+            --button-shadow: #2E7D32;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-primary: #1a1a1a;
+                --bg-secondary: #2d2d2d;
+                --bg-controls: #2E7D32;
+                --bg-controls-active: #45a049;
+                --text-primary: #ffffff;
+                --text-secondary: #cccccc;
+                --border-color: #444444;
+                --shadow-color: rgba(0,0,0,0.4);
+                --obstacle-color: #c0392b;
+                --trash-color: #2980b9;
+                --floor-color: #2d2d2d;
+                --wall-color: #1c2833;
+                --robot-color: #ffffff;
+                --robot-outline: #34495e;
+                --robot-eye: #c0392b;
+                --robot-details: #0097a7;
+                --robot-sensor: #95a5a6;
+                --stats-bg: linear-gradient(to right, #2E7D32, #27ae60);
+                --overlay-bg: rgba(0,0,0,0.9);
+                --button-shadow: #1b5e20;
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            touch-action: manipulation;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: var(--bg-primary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 15px;
+            overflow: hidden;
+        }
+
+        .game-container {
+            background: var(--bg-primary);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px var(--shadow-color);
+            overflow: hidden;
+            max-width: 500px;
+            width: 100%;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+        }
+
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            background: var(--stats-bg);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            font-weight: bold;
+            box-shadow: 0 4px 6px var(--shadow-color);
+        }
+
+        .level-indicator {
+            background: #ff9800;
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 0.9em;
+        }
+
+        .progress-container {
+            margin-bottom: 15px;
+        }
+
+        .progress-bar {
+            height: 10px;
+            background: var(--bg-secondary);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(to right, #4CAF50, #2E7D32);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        #gameCanvas {
+            background-color: var(--floor-color);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            width: 100%;
+            display: block;
+            box-shadow: inset 0 0 10px var(--shadow-color);
+            margin: 20px 0;
+        }
+
+        .controls-container {
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .controls-row {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        .control-btn {
+            width: 80px;
+            height: 80px;
+            font-size: 32px;
+            margin: 0 10px;
+            background: var(--bg-controls);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            user-select: none;
+            box-shadow: 0 6px 0 var(--button-shadow), 0 8px 15px var(--shadow-color);
+            transition: all 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            outline: none;
+        }
+
+        .control-btn.active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 var(--button-shadow), 0 4px 8px var(--shadow-color);
+            background: var(--bg-controls-active);
+        }
+
+        .game-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--overlay-bg);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            border-radius: 20px;
+        }
+
+        .overlay-content {
+            background: rgba(255,255,255,0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            max-width: 90%;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .overlay-content h2 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .overlay-content p {
+            font-size: 1.2em;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+
+        .action-btn {
+            background: linear-gradient(145deg, #FF5722, #E64A19);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2em;
+            border-radius: 50px;
+            cursor: pointer;
+            margin: 10px;
+            font-weight: bold;
+            box-shadow: 0 6px 0 #BF360C, 0 8px 20px rgba(0,0,0,0.3);
+            transition: all 0.2s;
+        }
+
+        .action-btn.next {
+            background: linear-gradient(145deg, #2196F3, #1976D2);
+            box-shadow: 0 6px 0 #0D47A1, 0 8px 20px rgba(0,0,0,0.3);
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: var(--text-secondary);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: var(--text-primary);
+            display: block;
+        }
+
+        .brand {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .brand a {
+            color: var(--text-secondary);
+            font-size: 0.8em;
+            text-decoration: underline;
+            text-decoration-color: var(--text-secondary);
+            text-decoration-thickness: 1px;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div style="height: 20px;"></div>
+        
+        <div class="game-header">
+            <div class="level-info">
+                Уровень: <span id="level">1</span>/10
+            </div>
+            <div class="trash-info">
+                Мусор: <span id="trashCount">0</span>/<span id="trashTotal">10</span>
+            </div>
+            <div class="level-indicator" id="levelName">Начальный</div>
+        </div>
+        
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+        
+        <canvas id="gameCanvas" width="450" height="450"></canvas>
+        
+        <div class="stats">
+            <div class="stat-item">
+                <span class="stat-value" id="time">0</span>
+                секунд
+            </div>
+            <div class="stat-item">
+                <span class="stat-value" id="score">0</span>
+                очков
+            </div>
+            <div class="stat-item">
+                <span class="stat-value" id="moves">0</span>
+                ходов
+            </div>
+        </div>
+        
+        <div class="controls-container">
+            <div class="controls-row">
+                <button class="control-btn" id="btnUp">↑</button>
+            </div>
+            <div class="controls-row">
+                <button class="control-btn" id="btnLeft">←</button>
+                <button class="control-btn" id="btnDown">↓</button>
+                <button class="control-btn" id="btnRight">→</button>
+            </div>
+        </div>
+        
+        <div class="brand">
+            <a href="https://t.me/kabinagames" target="_blank">Kabina Inc.</a>
+        </div>
+        
+        <div class="game-overlay" id="gameOverOverlay">
+            <div class="overlay-content">
+                <h2 id="overlayTitle">ИГРА ОКОНЧЕНА</h2>
+                <p id="overlayMessage">Вы проиграли!</p>
+                <div id="overlayStats"></div>
+                <button class="action-btn" id="restartBtn">🔄 Начать заново</button>
+                <button class="action-btn next" id="nextLevelBtn" style="display: none;">➡️ Следующий уровень</button>
+            </div>
+        </div>
+        
+        <div class="game-overlay" id="startOverlay" style="display: flex;">
+            <div class="overlay-content">
+                <h2>Робот Пылесос</h2>
+                <p>Собери весь мусор и избегай препятствий!</p>
+                <button class="action-btn" id="startBtn">🎮 Начать игру</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Конфигурация игры
+        const CONFIG = {
+            LEVELS: 10,
+            ROBOT_SPEED: 3,
+            ROBOT_SPEED_HOLD: 2,
+            ROBOT_RADIUS: 16,
+            TRASH_RADIUS: 10,
+            LEVEL_NAMES: [
+                'Начальный', 'Легкий', 'Простой', 'Средний', 'Нормальный',
+                'Сложный', 'Очень сложный', 'Эксперт', 'Мастер', 'Невозможный'
+            ]
+        };
+
+        // Элементы DOM
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const levelElement = document.getElementById('level');
+        const trashCountElement = document.getElementById('trashCount');
+        const trashTotalElement = document.getElementById('trashTotal');
+        const progressFill = document.getElementById('progressFill');
+        const levelNameElement = document.getElementById('levelName');
+        const timeElement = document.getElementById('time');
+        const scoreElement = document.getElementById('score');
+        const movesElement = document.getElementById('moves');
+        const gameOverOverlay = document.getElementById('gameOverOverlay');
+        const startOverlay = document.getElementById('startOverlay');
+        const overlayTitle = document.getElementById('overlayTitle');
+        const overlayMessage = document.getElementById('overlayMessage');
+        const overlayStats = document.getElementById('overlayStats');
+        const restartBtn = document.getElementById('restartBtn');
+        const nextLevelBtn = document.getElementById('nextLevelBtn');
+        const startBtn = document.getElementById('startBtn');
+
+        // Состояние игры
+        let currentLevel = 1;
+        let gameState = {
+            score: 0,
+            time: 0,
+            moves: 0,
+            trashCollected: 0,
+            totalTrash: 0,
+            gameOver: false,
+            levelComplete: false,
+            gameStarted: false,
+            timerInterval: null,
+            activeKeys: new Set(),
+            activeButtons: new Set(),
+            lastUpdateTime: 0,
+            moveCountedThisFrame: false,
+            gameLoopRunning: true // Флаг, что игровой цикл должен работать
+        };
+
+        // Объекты игры
+        let robot = {
+            x: 0,
+            y: 0,
+            radius: CONFIG.ROBOT_RADIUS,
+            angle: 0
+        };
+        let trash = [];
+        let obstacles = [];
+        let roomSize = { width: 450, height: 450 };
+
+        // Инициализация игры
+        function initGame() {
+            canvas.width = 450;
+            canvas.height = 450;
+            
+            // Сброс состояния
+            gameState.score = 0;
+            gameState.time = 0;
+            gameState.moves = 0;
+            gameState.trashCollected = 0;
+            gameState.gameOver = false;
+            gameState.levelComplete = false;
+            gameState.activeKeys.clear();
+            gameState.activeButtons.clear();
+            gameState.moveCountedThisFrame = false;
+            gameState.gameLoopRunning = true; // Важно: включаем игровой цикл
+            
+            updateUI();
+            createLevel(currentLevel);
+            gameState.lastUpdateTime = performance.now();
+            
+            // Запускаем игровой цикл если он не запущен
+            if (gameState.gameStarted) {
+                requestAnimationFrame(gameLoop);
+            }
+        }
+
+        // Создание уровня
+        function createLevel(level) {
+            // Очистка
+            trash = [];
+            obstacles = [];
+            gameState.trashCollected = 0;
+            
+            // Настройки уровня
+            const baseSize = 400;
+            const sizeIncrease = Math.min((level - 1) * 30, 200);
+            roomSize = {
+                width: baseSize + sizeIncrease,
+                height: baseSize + sizeIncrease
+            };
+            
+            // Центрируем комнату на канвасе
+            roomSize.offsetX = (450 - roomSize.width) / 2;
+            roomSize.offsetY = (450 - roomSize.height) / 2;
+            
+            // Создаем стены
+            const wallThickness = 20;
+            obstacles.push({
+                x: roomSize.offsetX,
+                y: roomSize.offsetY,
+                width: roomSize.width,
+                height: wallThickness,
+                type: 'wall'
+            });
+            obstacles.push({
+                x: roomSize.offsetX,
+                y: roomSize.offsetY + roomSize.height - wallThickness,
+                width: roomSize.width,
+                height: wallThickness,
+                type: 'wall'
+            });
+            obstacles.push({
+                x: roomSize.offsetX,
+                y: roomSize.offsetY,
+                width: wallThickness,
+                height: roomSize.height,
+                type: 'wall'
+            });
+            obstacles.push({
+                x: roomSize.offsetX + roomSize.width - wallThickness,
+                y: roomSize.offsetY,
+                width: wallThickness,
+                height: roomSize.height,
+                type: 'wall'
+            });
+            
+            // Внутренние препятствия
+            const obstacleCount = Math.min(3 + level * 2, 15);
+            for (let i = 0; i < obstacleCount; i++) {
+                let obstacle;
+                let attempts = 0;
+                
+                do {
+                    const width = 30 + Math.random() * 50;
+                    const height = 30 + Math.random() * 50;
+                    
+                    obstacle = {
+                        x: roomSize.offsetX + wallThickness + Math.random() * (roomSize.width - width - 2 * wallThickness),
+                        y: roomSize.offsetY + wallThickness + Math.random() * (roomSize.height - height - 2 * wallThickness),
+                        width: width,
+                        height: height,
+                        radius: 10,
+                        type: 'obstacle'
+                    };
+                    attempts++;
+                } while (isOverlapping(obstacle) && attempts < 100);
+                
+                if (attempts < 100) {
+                    obstacles.push(obstacle);
+                }
+            }
+            
+            // Находим безопасную позицию для робота
+            const safePos = findSafePosition();
+            robot.x = safePos.x;
+            robot.y = safePos.y;
+            robot.angle = 0;
+            
+            // Создаем мусор
+            gameState.totalTrash = Math.min(5 + level * 3, 30);
+            for (let i = 0; i < gameState.totalTrash; i++) {
+                let piece;
+                let attempts = 0;
+                
+                do {
+                    piece = {
+                        x: roomSize.offsetX + CONFIG.TRASH_RADIUS + wallThickness + 
+                            Math.random() * (roomSize.width - 2 * wallThickness - 2 * CONFIG.TRASH_RADIUS),
+                        y: roomSize.offsetY + CONFIG.TRASH_RADIUS + wallThickness + 
+                            Math.random() * (roomSize.height - 2 * wallThickness - 2 * CONFIG.TRASH_RADIUS),
+                        radius: CONFIG.TRASH_RADIUS,
+                        collected: false,
+                        type: Math.floor(Math.random() * 3)
+                    };
+                    attempts++;
+                } while (isTrashOverlapping(piece) && attempts < 100);
+                
+                if (attempts < 100) {
+                    trash.push(piece);
+                }
+            }
+            
+            updateUI();
+        }
+
+        // Поиск безопасной позиции для робота
+        function findSafePosition() {
+            const wallThickness = 20;
+            const maxAttempts = 100;
+            
+            for (let attempt = 0; attempt < maxAttempts; attempt++) {
+                const x = roomSize.offsetX + robot.radius + wallThickness + 10 + 
+                         Math.random() * (roomSize.width - 2 * wallThickness - 2 * robot.radius - 20);
+                const y = roomSize.offsetY + robot.radius + wallThickness + 10 + 
+                         Math.random() * (roomSize.height - 2 * wallThickness - 2 * robot.radius - 20);
+                
+                if (isPositionSafe(x, y)) {
+                    return { x, y };
+                }
+            }
+            
+            return {
+                x: roomSize.offsetX + robot.radius + wallThickness + 10,
+                y: roomSize.offsetY + robot.radius + wallThickness + 10
+            };
+        }
+
+        function isPositionSafe(x, y) {
+            for (const obstacle of obstacles) {
+                const closestX = Math.max(obstacle.x, Math.min(x, obstacle.x + obstacle.width));
+                const closestY = Math.max(obstacle.y, Math.min(y, obstacle.y + obstacle.height));
+                
+                const distance = Math.sqrt(
+                    Math.pow(x - closestX, 2) +
+                    Math.pow(y - closestY, 2)
+                );
+                
+                if (distance < robot.radius) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function isOverlapping(rect) {
+            for (const obstacle of obstacles) {
+                if (rect === obstacle) continue;
+                
+                const distanceX = Math.abs((rect.x + rect.width/2) - (obstacle.x + obstacle.width/2));
+                const distanceY = Math.abs((rect.y + rect.height/2) - (obstacle.y + obstacle.height/2));
+                
+                if (distanceX < (rect.width + obstacle.width)/2 + 20 &&
+                    distanceY < (rect.height + obstacle.height)/2 + 20) {
+                    return true;
+                }
+            }
+            
+            const distance = Math.sqrt(
+                Math.pow(rect.x + rect.width/2 - robot.x, 2) +
+                Math.pow(rect.y + rect.height/2 - robot.y, 2)
+            );
+            
+            return distance < robot.radius + Math.max(rect.width, rect.height) + 20;
+        }
+
+        function isTrashOverlapping(piece) {
+            for (const obstacle of obstacles) {
+                const closestX = Math.max(obstacle.x, Math.min(piece.x, obstacle.x + obstacle.width));
+                const closestY = Math.max(obstacle.y, Math.min(piece.y, obstacle.y + obstacle.height));
+                
+                const distance = Math.sqrt(
+                    Math.pow(piece.x - closestX, 2) +
+                    Math.pow(piece.y - closestY, 2)
+                );
+                
+                if (distance < piece.radius) {
+                    return true;
+                }
+            }
+            
+            for (const other of trash) {
+                if (piece === other) continue;
+                
+                const distance = Math.sqrt(
+                    Math.pow(piece.x - other.x, 2) +
+                    Math.pow(piece.y - other.y, 2)
+                );
+                if (distance < piece.radius * 2) {
+                    return true;
+                }
+            }
+            
+            const distanceToRobot = Math.sqrt(
+                Math.pow(piece.x - robot.x, 2) +
+                Math.pow(piece.y - robot.y, 2)
+            );
+            
+            return distanceToRobot < robot.radius + piece.radius + 20;
+        }
+
+        // Отрисовка
+        function draw() {
+            // Очищаем канвас
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Рисуем фон
+            ctx.fillStyle = getComputedStyle(document.documentElement)
+                .getPropertyValue('--floor-color').trim();
+            ctx.fillRect(roomSize.offsetX, roomSize.offsetY, roomSize.width, roomSize.height);
+            
+            // Рисуем стены
+            ctx.fillStyle = getComputedStyle(document.documentElement)
+                .getPropertyValue('--wall-color').trim();
+            for (const wall of obstacles.filter(o => o.type === 'wall')) {
+                ctx.fillRect(wall.x, wall.y, wall.width, wall.height);
+            }
+            
+            // Рисуем внутренние препятствия
+            ctx.fillStyle = getComputedStyle(document.documentElement)
+                .getPropertyValue('--obstacle-color').trim();
+            for (const obstacle of obstacles.filter(o => o.type === 'obstacle')) {
+                const radius = Math.min(obstacle.radius, obstacle.width/2, obstacle.height/2);
+                
+                ctx.beginPath();
+                ctx.moveTo(obstacle.x + radius, obstacle.y);
+                ctx.lineTo(obstacle.x + obstacle.width - radius, obstacle.y);
+                ctx.quadraticCurveTo(obstacle.x + obstacle.width, obstacle.y, obstacle.x + obstacle.width, obstacle.y + radius);
+                ctx.lineTo(obstacle.x + obstacle.width, obstacle.y + obstacle.height - radius);
+                ctx.quadraticCurveTo(obstacle.x + obstacle.width, obstacle.y + obstacle.height, obstacle.x + obstacle.width - radius, obstacle.y + obstacle.height);
+                ctx.lineTo(obstacle.x + radius, obstacle.y + obstacle.height);
+                ctx.quadraticCurveTo(obstacle.x, obstacle.y + obstacle.height, obstacle.x, obstacle.y + obstacle.height - radius);
+                ctx.lineTo(obstacle.x, obstacle.y + radius);
+                ctx.quadraticCurveTo(obstacle.x, obstacle.y, obstacle.x + radius, obstacle.y);
+                ctx.closePath();
+                ctx.fill();
+            }
+            
+            // Рисуем мусор
+            for (const piece of trash) {
+                if (!piece.collected) {
+                    let color;
+                    switch(piece.type) {
+                        case 0: color = '#4CAF50'; break;
+                        case 1: color = '#FF9800'; break;
+                        case 2: color = '#2196F3'; break;
+                    }
+                    
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.arc(piece.x, piece.y, piece.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            
+            // Рисуем робота
+            ctx.fillStyle = getComputedStyle(document.documentElement)
+                .getPropertyValue('--robot-color').trim();
+            ctx.beginPath();
+            ctx.arc(robot.x, robot.y, robot.radius, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.strokeStyle = getComputedStyle(document.documentElement)
+                .getPropertyValue('--robot-outline').trim();
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            
+            // Глаз робота
+            ctx.fillStyle = getComputedStyle(document.documentElement)
+                .getPropertyValue('--robot-eye').trim();
+            ctx.beginPath();
+            const eyeX = robot.x + Math.cos(robot.angle) * robot.radius * 0.6;
+            const eyeY = robot.y + Math.sin(robot.angle) * robot.radius * 0.6;
+            ctx.arc(eyeX, eyeY, robot.radius * 0.3, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Два датчика спереди
+            ctx.fillStyle = getComputedStyle(document.documentElement)
+                .getPropertyValue('--robot-sensor').trim();
+            
+            // Левый датчик
+            const sensorAngle = robot.angle + Math.PI * 0.3;
+            const sensor1X = robot.x + Math.cos(sensorAngle) * robot.radius * 0.8;
+            const sensor1Y = robot.y + Math.sin(sensorAngle) * robot.radius * 0.8;
+            ctx.beginPath();
+            ctx.arc(sensor1X, sensor1Y, robot.radius * 0.2, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Правый датчик
+            const sensorAngle2 = robot.angle - Math.PI * 0.3;
+            const sensor2X = robot.x + Math.cos(sensorAngle2) * robot.radius * 0.8;
+            const sensor2Y = robot.y + Math.sin(sensorAngle2) * robot.radius * 0.8;
+            ctx.beginPath();
+            ctx.arc(sensor2X, sensor2Y, robot.radius * 0.2, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Центральная кнопка
+            ctx.fillStyle = getComputedStyle(document.documentElement)
+                .getPropertyValue('--robot-details').trim();
+            ctx.beginPath();
+            ctx.arc(robot.x, robot.y, robot.radius * 0.4, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // Обновление движения
+        function updateMovement(deltaTime) {
+            if (gameState.gameOver || gameState.levelComplete) return;
+            
+            let dx = 0;
+            let dy = 0;
+            
+            // Проверяем активные клавиши
+            if (gameState.activeKeys.has('arrowup') || gameState.activeKeys.has('w') || gameState.activeKeys.has('ц')) {
+                dy = -1;
+            }
+            if (gameState.activeKeys.has('arrowdown') || gameState.activeKeys.has('s') || gameState.activeKeys.has('ы')) {
+                dy = 1;
+            }
+            if (gameState.activeKeys.has('arrowleft') || gameState.activeKeys.has('a') || gameState.activeKeys.has('ф')) {
+                dx = -1;
+            }
+            if (gameState.activeKeys.has('arrowright') || gameState.activeKeys.has('d') || gameState.activeKeys.has('в')) {
+                dx = 1;
+            }
+            
+            // Проверяем активные кнопки
+            if (gameState.activeButtons.has('up')) dy = -1;
+            if (gameState.activeButtons.has('down')) dy = 1;
+            if (gameState.activeButtons.has('left')) dx = -1;
+            if (gameState.activeButtons.has('right')) dx = 1;
+            
+            // Если есть движение
+            if (dx !== 0 || dy !== 0) {
+                // Обновляем угол
+                robot.angle = Math.atan2(dy, dx);
+                
+                // Выбираем скорость
+                const currentSpeed = gameState.activeButtons.size > 0 ? CONFIG.ROBOT_SPEED_HOLD : CONFIG.ROBOT_SPEED;
+                
+                // Новая позиция
+                const speedMultiplier = deltaTime / 16.67;
+                const newX = robot.x + dx * currentSpeed * speedMultiplier;
+                const newY = robot.y + dy * currentSpeed * speedMultiplier;
+                
+                // Проверка границ комнаты
+                const wallThickness = 20;
+                const minX = roomSize.offsetX + robot.radius + wallThickness;
+                const maxX = roomSize.offsetX + roomSize.width - robot.radius - wallThickness;
+                const minY = roomSize.offsetY + robot.radius + wallThickness;
+                const maxY = roomSize.offsetY + roomSize.height - robot.radius - wallThickness;
+                
+                if (newX >= minX && newX <= maxX) {
+                    robot.x = newX;
+                }
+                if (newY >= minY && newY <= maxY) {
+                    robot.y = newY;
+                }
+                
+                // Подсчет ходов
+                if (!gameState.moveCountedThisFrame) {
+                    gameState.moves++;
+                    movesElement.textContent = gameState.moves;
+                    gameState.moveCountedThisFrame = true;
+                }
+                
+                // Проверка столкновений и сбора мусора
+                checkCollisions();
+                checkTrashCollection();
+            } else {
+                gameState.moveCountedThisFrame = false;
+            }
+        }
+
+        // Проверка столкновений
+        function checkCollisions() {
+            for (const obstacle of obstacles) {
+                if (obstacle.type === 'wall') continue;
+                
+                const closestX = Math.max(obstacle.x, Math.min(robot.x, obstacle.x + obstacle.width));
+                const closestY = Math.max(obstacle.y, Math.min(robot.y, obstacle.y + obstacle.height));
+                
+                const distance = Math.sqrt(
+                    Math.pow(robot.x - closestX, 2) +
+                    Math.pow(robot.y - closestY, 2)
+                );
+                
+                if (distance < robot.radius) {
+                    gameOver();
+                    return;
+                }
+            }
+        }
+
+        // Проверка сбора мусора
+        function checkTrashCollection() {
+            for (const piece of trash) {
+                if (!piece.collected) {
+                    const distance = Math.sqrt(
+                        Math.pow(robot.x - piece.x, 2) +
+                        Math.pow(robot.y - piece.y, 2)
+                    );
+                    
+                    if (distance < robot.radius + piece.radius) {
+                        piece.collected = true;
+                        gameState.trashCollected++;
+                        gameState.score += 100 * currentLevel;
+                        
+                        updateUI();
+                        
+                        if (gameState.trashCollected === gameState.totalTrash) {
+                            levelComplete();
+                        }
+                    }
+                }
+            }
+        }
+
+        // Завершение уровня
+        function levelComplete() {
+            gameState.levelComplete = true;
+            gameState.activeKeys.clear();
+            gameState.activeButtons.clear();
+            updateButtonStates();
+            gameState.score += 500 * currentLevel;
+            gameState.gameLoopRunning = false; // Останавливаем игровой цикл
+            
+            overlayTitle.textContent = 'УРОВЕНЬ ПРОЙДЕН!';
+            overlayMessage.textContent = `Отлично! Вы собрали весь мусор на уровне ${currentLevel}.`;
+            
+            overlayStats.innerHTML = `
+                <p>Счет: ${gameState.score}</p>
+                <p>Время: ${gameState.time} сек.</p>
+                <p>Ходов: ${gameState.moves}</p>
+            `;
+            
+            nextLevelBtn.style.display = currentLevel < CONFIG.LEVELS ? 'inline-block' : 'none';
+            gameOverOverlay.style.display = 'flex';
+        }
+
+        // Конец игры
+        function gameOver() {
+            gameState.gameOver = true;
+            gameState.activeKeys.clear();
+            gameState.activeButtons.clear();
+            updateButtonStates();
+            gameState.gameLoopRunning = false; // Останавливаем игровой цикл
+            
+            overlayTitle.textContent = 'СТОЛКНОВЕНИЕ!';
+            overlayMessage.textContent = 'Робот врезался в препятствие!';
+            
+            overlayStats.innerHTML = `
+                <p>Уровень: ${currentLevel}</p>
+                <p>Собран мусор: ${gameState.trashCollected}/${gameState.totalTrash}</p>
+                <p>Итоговый счет: ${gameState.score}</p>
+            `;
+            
+            nextLevelBtn.style.display = 'none';
+            gameOverOverlay.style.display = 'flex';
+        }
+
+        // Обновление UI
+        function updateUI() {
+            levelElement.textContent = currentLevel;
+            trashCountElement.textContent = gameState.trashCollected;
+            trashTotalElement.textContent = gameState.totalTrash;
+            scoreElement.textContent = gameState.score;
+            levelNameElement.textContent = CONFIG.LEVEL_NAMES[currentLevel - 1];
+            
+            const progress = gameState.totalTrash > 0 ? 
+                (gameState.trashCollected / gameState.totalTrash) * 100 : 0;
+            progressFill.style.width = `${progress}%`;
+        }
+
+        // Обновление состояния кнопок
+        function updateButtonStates() {
+            const buttons = ['btnUp', 'btnDown', 'btnLeft', 'btnRight'];
+            buttons.forEach(id => {
+                const btn = document.getElementById(id);
+                const direction = id.replace('btn', '').toLowerCase();
+                if (gameState.activeButtons.has(direction)) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        }
+
+        // Игровой цикл - УПРОЩЕННАЯ ВЕРСИЯ
+        function gameLoop() {
+            const currentTime = performance.now();
+            const deltaTime = currentTime - gameState.lastUpdateTime;
+            
+            updateMovement(deltaTime);
+            draw();
+            
+            gameState.lastUpdateTime = currentTime;
+            
+            // ПРОСТОЙ ПРИНЦИП: если игра активна - продолжаем цикл
+            if (gameState.gameStarted && !gameState.gameOver && !gameState.levelComplete) {
+                requestAnimationFrame(gameLoop);
+            }
+        }
+
+        // Обработка клавиатуры
+        function handleKeyDown(e) {
+            const key = e.key.toLowerCase();
+            
+            if (gameState.activeKeys.has(key)) return;
+            
+            switch(key) {
+                case 'arrowup':
+                case 'w':
+                case 'ц':
+                    gameState.activeKeys.add('arrowup');
+                    break;
+                case 'arrowdown':
+                case 's':
+                case 'ы':
+                    gameState.activeKeys.add('arrowdown');
+                    break;
+                case 'arrowleft':
+                case 'a':
+                case 'ф':
+                    gameState.activeKeys.add('arrowleft');
+                    break;
+                case 'arrowright':
+                case 'd':
+                case 'в':
+                    gameState.activeKeys.add('arrowright');
+                    break;
+                case 'r':
+                case 'к':
+                    restartGame();
+                    break;
+                case ' ':
+                    if (gameState.levelComplete) {
+                        nextLevel();
+                    }
+                    break;
+            }
+        }
+
+        function handleKeyUp(e) {
+            const key = e.key.toLowerCase();
+            
+            switch(key) {
+                case 'arrowup':
+                case 'w':
+                case 'ц':
+                    gameState.activeKeys.delete('arrowup');
+                    break;
+                case 'arrowdown':
+                case 's':
+                case 'ы':
+                    gameState.activeKeys.delete('arrowdown');
+                    break;
+                case 'arrowleft':
+                case 'a':
+                case 'ф':
+                    gameState.activeKeys.delete('arrowleft');
+                    break;
+                case 'arrowright':
+                case 'd':
+                case 'в':
+                    gameState.activeKeys.delete('arrowright');
+                    break;
+            }
+        }
+
+        // Обработка сенсорного управления
+        function setupTouchControls() {
+            const buttons = {
+                'btnUp': 'up',
+                'btnDown': 'down',
+                'btnLeft': 'left',
+                'btnRight': 'right'
+            };
+            
+            Object.entries(buttons).forEach(([id, direction]) => {
+                const btn = document.getElementById(id);
+                
+                const startHandler = (e) => {
+                    e.preventDefault();
+                    if (!gameState.activeButtons.has(direction)) {
+                        gameState.activeButtons.add(direction);
+                        updateButtonStates();
+                    }
+                };
+                
+                btn.addEventListener('touchstart', startHandler);
+                btn.addEventListener('mousedown', startHandler);
+                
+                const endHandler = (e) => {
+                    e.preventDefault();
+                    gameState.activeButtons.delete(direction);
+                    updateButtonStates();
+                };
+                
+                btn.addEventListener('touchend', endHandler);
+                btn.addEventListener('touchcancel', endHandler);
+                btn.addEventListener('mouseup', endHandler);
+                btn.addEventListener('mouseleave', endHandler);
+            });
+        }
+
+        // Следующий уровень - УПРОЩЕННАЯ ВЕРСИЯ
+        function nextLevel() {
+            if (currentLevel < CONFIG.LEVELS) {
+                currentLevel++;
+                gameOverOverlay.style.display = 'none';
+                
+                // Сбрасываем состояние для нового уровня
+                gameState.gameOver = false;
+                gameState.levelComplete = false;
+                gameState.gameLoopRunning = true;
+                
+                createLevel(currentLevel);
+                gameState.lastUpdateTime = performance.now();
+                
+                // ПРОСТО ЗАПУСКАЕМ ИГРОВОЙ ЦИКЛ
+                gameLoop();
+            } else {
+                overlayTitle.textContent = 'ПОБЕДА!';
+                overlayMessage.textContent = 'Вы прошли все 10 уровней!';
+                overlayStats.innerHTML = `<p>Финальный счет: ${gameState.score}</p>`;
+            }
+        }
+
+        // Перезапуск игры
+        function restartGame() {
+            currentLevel = 1;
+            gameOverOverlay.style.display = 'none';
+            initGame();
+        }
+
+        // Начало игры
+        function startGame() {
+            startOverlay.style.display = 'none';
+            gameState.gameStarted = true;
+            initGame();
+            
+            // Запускаем таймер
+            if (gameState.timerInterval) {
+                clearInterval(gameState.timerInterval);
+            }
+            gameState.timerInterval = setInterval(() => {
+                if (!gameState.gameOver && !gameState.levelComplete && gameState.gameStarted) {
+                    gameState.time++;
+                    timeElement.textContent = gameState.time;
+                }
+            }, 1000);
+            
+            // Запускаем игровой цикл
+            gameLoop();
+        }
+
+        // Инициализация
+        function init() {
+            // Настройка управления
+            document.addEventListener('keydown', handleKeyDown);
+            document.addEventListener('keyup', handleKeyUp);
+            setupTouchControls();
+            
+            // Кнопки интерфейса
+            startBtn.addEventListener('click', startGame);
+            restartBtn.addEventListener('click', restartGame);
+            nextLevelBtn.addEventListener('click', nextLevel);
+            
+            // Первоначальная отрисовка
+            canvas.width = 450;
+            canvas.height = 450;
+            ctx.fillStyle = getComputedStyle(document.documentElement)
+                .getPropertyValue('--floor-color').trim();
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // Запуск при загрузке
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
